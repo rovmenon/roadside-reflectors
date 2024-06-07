@@ -1,0 +1,537 @@
+---
+title: "\\Huge\\centering Do Roadside Reflectors Cause Drivers To Alter Their Speed At Night?"
+author: "\\Large\\centering Daniel Skahill, Alek Lichucki, Alex Hubbard, Rohit Menon"
+date: "\\centering 04/18/2024"
+output:
+  pdf_document:
+    toc: no
+    number_sections: true
+editor_options:
+  chunk_output_type: console
+---
+\newpage
+```{=latex}
+\setcounter{tocdepth}{4}
+\tableofcontents
+```
+\newpage
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(data.table)
+library(tidyverse)
+library(gt)
+library(sandwich)
+library(lmtest)
+library(stargazer)
+library(AER) 
+library(ggplot2) 
+library(patchwork)
+library(knitr)
+library(gridExtra)
+```
+
+```{r include=FALSE}
+d <- read.csv('Data Collection - FinalMerged.csv')
+
+d[d$Vehicle.Category == "Van ",]$Vehicle.Category = "Van"
+d[d$Road.ID == 2, ]$Speed.Limit = 30
+```
+# Introduction
+Nighttime driving poses significant challenges for drivers, with visibility ranking among the top concerns (The Zebra 2023). To address these challenges, we investigate the impact of roadside reflectors (Appendix A) on drivers' behavior. Our experiment entails measuring vehicle speeds before and after the installation of reflective roadside markers across various roads. We hypothesize that these reflectors enhance driver awareness, leading to speed alterations. Our research aims to examine whether reflective roadside markers induce changes in driving speed during nighttime conditions. We employ an experimental design that incorporates an AB-BA approach to assess treatment effects and a potential return to baseline conditions. While increasing/decreasing speeds cannot concretely define impacts on safety, this study offers valuable insights into the efficacy of reflective roadside markers and informs policymakers, such as the California Department of Transportation, about potential strategies to enhance nighttime driving safety.
+
+# Background
+Prior to experimentation, it was important to acknowledge prior studies that assessed theories and concepts related to roadside reflectors, markings, and driver behavior. However, there was a significant gap in the literature specifically about the effectiveness of reflective roadside markings at night. Furthermore, adjacent studies presented conflicting findings in terms of treatment effects from reflectors. 
+
+The closest study to our intended experiment titled *Rainvision: the impact of road markings on driver behaviour –  wet night visibility* discovered that reflective markings led to “driving comfort as well as clearness and perceptibility” in all simulated weather conditions, though researchers found that speeds increased with this added comfort (Diamandouros et al. 2016). Similarly, the authors of *Effect of road markings and road signs quality on driving behaviour, driver’s gaze patterns and driver’s cognitive load at night-time* found that road markings led to a slight increase in driving speed, but had a positive effect on cognitive load. The effect was measured using a driving simulator, in which drivers were subject to a variety of marked and unmarked roads while their driving behavior and gaze behavior was monitored (Fiolić et al., 2023). Because we conduct our experiment on multiple roads under real-world conditions–some straighter than others–we may see an effect similar to the findings of Fiolić et al., 2023. 
+
+In another study published in *Transportation Research Part F: Traffic Psychology and Behaviour*, researchers investigated the use of wide longitudinal road markings and their effect on drivers’ speed before a curve. Researchers concluded that in general “higher speeds are perceived when the lane width seems narrower, making drivers go somewhat more slowly.” This was measured by showing participants videos of roads with either narrow or widened markings, then surveying their perceived speed (Garach et al., 2022). Our investigation hypothesizes that roadside markings at night not only enhance road visibility, but speed perception as well. 
+
+A literature review published in the *Journal of Advanced Transportation*, analyzed multiple studies related to road markings “for speed reduction and speed limit compliance” and found that different types of markings (lane, middle of road, etc.) on different types of roads (downhill, curved, etc.) had the potential to reduce driving speeds. Further review suggested that road markings with higher retroreflectivity enhance visual guidance at night, potentially reducing accidents. It was found that increased retroreflectivity extends the maximum detection distance for road markings, ensuring driver safety in both dry and wet conditions (Babić et al., 2020). 
+
+Our study aims to add to the literature by testing whether, under real world conditions, reflective roadside markings cause alterations in driving speed at night. Although we look for changes in driving behavior, more research would need to be done to conclude whether the treatment and changes in behavior have implications for safety.
+
+# Research Question
+Prior research indicates that different road markings have different effects on driver behavior under different conditions. Because we are interested in observing driver behavior at night and need to comply with regulatory measures, we intend to narrow the scope of our research to answer the question:
+
+*Do small, round, red roadside reflectors cause drivers to alter their speed at night?*
+
+## Hypothesis
+While the literature shows mixed effects as to whether roadside markings that increase driver awareness increase or decrease driver speed, we hypothesize that at night, small, round, red roadside reflectors will have a significant effect on driving behavior. We do not have enough evidence to further indicate a direction in which we think that the treatment effect will go, however, we do believe we will see a change in behavior which will be directly measured as speed. 
+
+Because previous studies revealed both increases and decreases in speed as a result of introducing additional road markings, we present two causal hypothesis for the direction of a treatment effect–one for an increase and one for a decrease in speed.
+
+* Roadside markings provide drivers with greater comfort, visibility, and awareness enabling them to traverse roads with more confidence and at higher speeds. 
+* Roadside markings provide drivers with greater comfort, visibility, and awareness bringing greater attention to unseen obstacles resulting in a reduction of speed. 
+
+# Experiment Design
+## Overview
+The following steps describe the basic structure of our experiment. 
+
+* Select road of interest during the weekday at night
+* Designate a “measurement zone” on each road section where 
+    + Vehicle speeds are uninhibited by turns, stop walks, stop lights, or stop signs
+    + There is a direct view of the car from which we can measure speeds with the narrowest angle
+    + We are relatively hidden as to not influence driving behavior further
+    + It is possible to add road reflectors 
+* Measure the speeds of cars in the measurement zone 
+* Place roadside reflectors alongside the measurement zone
+* Measure the speeds of cars as they pass through the treatment zone
+* Do the same process on another weekday at night, but this time do treatment first and control second.
+
+We utilize "ABA" design to assess treatment effect and determine whether there is a return to baseline. Because we want to limit variance by measuring on different days of the week, we opt for an AB-BA design where one night we measure speeds in the order of AB (A being control and B being treatment), and the second night we measure speeds in the order of BA. Not only does this procedure reduce variability across days but also across times since we make an effort to start AB measurements at the same time as BA measurements. Below is an example of the experiment design.
+
+Day 1
+
+1. Arrive at road Y
+2. Choose measurement zone
+3. Note time
+4. Measure X number of cars in measurement zone (X was pre-determined arbitrarily based on local traffic conditions)
+5. Place treatment in measurement zone 
+6. Note time
+7. Measure X number of cars in measurement zone
+
+Day 2
+
+1. Arrive at road Y
+2. Place treatment in measurement zone (the same zone as the prior day)
+3. Note time
+4. Measure X number of cars in measurement zone
+5. Remove treatment
+6. Note time
+7. Measure X number of cars in measurement zone
+
+## Design Limitations
+Due to the nature of the question we sought to answer, we encountered a number of limitations. However, we do not believe that they pose a threat to the validity of our experimentation.
+
+### Randomization
+Because we measure speeds under real-world conditions, we were not able to explicitly randomize. However, we can assume that we have a randomized sample because: 
+
+* We have a large sample size spread across several roads
+* We arbitrarily chose cutoff thresholds for when to switch from control to treatment and treatment to control. We then ensured that we conducted the experiment on another weekday at the same time with flipped ordering. 
+* Due to our experimental design, any car driving on the given road at night has a relatively equal probability of being in either the treatment or control group. 
+
+### Measurement
+We use Bushnell’s Radar Speed Gun (Appendix B) which measures speed to the nearest mile per hour (mph) with an accuracy of ±1 mph when measuring directly in front or behind the moving object. However, radar technology uses the Doppler Effect to measure speed and by nature of the Doppler effect, accuracy decreases with an increased angle of measurement (Figure 1). Because different roads require us to be situated differently, it was difficult to maintain a consistent angle at which each group member could measure the speed of cars. We did our best to measure with the smallest angle. 
+
+ ![Diagram of Doppler Effect and Radar Accuracy](doppler_angle.png)
+
+### Standardization
+Due to differences in roads and road conditions, we were unable to standardize the spacing and height of the reflectors. Because of this, it is possible that different reflector spacings have different effects on driver awareness and speed. On roads 1, 4 and 5, 8 reflectors were placed over about 150 feet, whereas for road 2 the reflectors were placed over about 20 feet with spaces of about 2 feet between each reflector.
+
+### Selection Bias and Independence Tradeoffs
+Measuring roads with more traffic comes with greater difficulty as there are occasionally “chains” of multiple cars in which the first car dictates the speed of the following cars. Because of this, we had to make a tradeoff between selection bias and independence violations– we chose to use discretion with chains and, in general, only measured the first car since measuring all cars would result in a violation of independent observations (which we believe to be a greater threat to validity than selection bias).
+
+# Data
+As noted in the prior section, we utilize a within-subjects design due to use of the same road sections. We designated 4 roads to complete experimentation with two in Morgan Hill, CA, 1 in Berkeley, CA, and 1 in Pasadena, CA (Table 1).
+
+## Feature Set
+
+We collected the following data for each observation:
+
+* Time of Day
+* Road ID
+* Speed Limit
+* Speed of Car
+* Type of Car (Sedan, Compact, SUV, Truck, Van, Motorcycle, Commercial)
+* Treatment Group
+* Street lights present 
+* Additional markings present
+* Experiment format (AB or BA)
+
+In total, we observed `r nrow(d)` vehicles (Table 2). Time of day is measured using either a phone clock or watch and is approximated to either the nearest 5th, 10th, or 30th minute. Car speed is measured using the radar from a consistent location for each observation on each road. 
+
+```{r echo=FALSE}
+road_id <- data.frame(
+  c(1, 2, 4, 5),
+  c("Mission View Dr.", "California Blvd.", "Pleasant Valley", "Bailey Ave."),
+  c(45, 30, 35, 50),
+  c(FALSE, TRUE, FALSE, FALSE),
+  c(TRUE, TRUE, TRUE, FALSE),
+  c(table(d$Road.ID))
+)
+
+# Column names
+column_names <- c("ID", "Name", "Speed Limit", "Additional Markings", "Street Lights", "# Obs.")
+
+colnames(road_id) <- column_names
+
+kable(road_id, format="markdown", caption = "Summary of Roads")
+```
+
+```{r echo=FALSE}
+d2 <- d
+colnames(d2) <- c("Time", "Speed", "VehicleCat", "RoadID", "Group", "SpeedLimit", "AddnlMark", "StrtLght", "Phase", "Angle")
+kable(head(d2), caption="Head of Data")
+``` 
+
+```{r echo=FALSE}
+cnames <- c("RoadID", "CtrlAB", "TreatAB", "CtrlBA", "TreatBA", "ABDiff", "BADiff")
+summary_df <- data.frame(matrix(ncol = length(cnames), nrow = 0))
+colnames(summary_df) <- cnames
+
+for(i in unique(d$Road.ID)){
+  c <- mean(d[(d$Road.ID == i) & (d$Treatment.or.Control == "C") & (d$AB.or.BA == "AB"),]$Speed)
+  t <- mean(d[(d$Road.ID == i) & (d$Treatment.or.Control == "T") & (d$AB.or.BA == "AB"),]$Speed)
+  c2 <- mean(d[(d$Road.ID == i) & (d$Treatment.or.Control == "C") & (d$AB.or.BA == "BA"),]$Speed)
+  t2 <- mean(d[(d$Road.ID == i) & (d$Treatment.or.Control == "T") & (d$AB.or.BA == "BA"),]$Speed)
+  ct_diff <- c - t
+  ct2_diff <- c2-t2
+  row <- c(i, c, t, c2, t2, ct_diff, ct2_diff)
+  summary_df <- rbind(summary_df, row)
+}
+colnames(summary_df) <- cnames
+kable(summary_df, caption = "Comparison of Mean Control and Treatment Group Speeds ", align = "c")
+```
+
+Table 3 breaks down the mean speeds by road id for phases AB and BA (A refers to control and B refers to treatment). ABDiff is the treatment effect during phase AB and BAdiff is the treatment effect during phase BA. Refer to Table 1 for speed limits and road characteristics. 
+
+```{r, echo=FALSE, include=FALSE}
+d_mean <- d %>%
+  group_by(Road.ID, Treatment.or.Control) %>%
+  summarise(mean_speed = mean(Speed, na.rm = TRUE))
+
+grouped_d <- d %>%
+  group_by(AB.or.BA, Treatment.or.Control) %>%
+  summarise(mean_speed = mean(Speed, na.rm = TRUE))
+```
+
+
+```{r echo=FALSE, fig.cap="Comparison of Control and Treatment Groups by Road ID and AB/BA", fig_caption=TRUE, fig.width=6, fig.height=4, message=FALSE}
+
+# Plot clustered barplot with mean speed and labels
+plot1 <- ggplot(d_mean, aes(x = factor(Road.ID), y = mean_speed, fill = Treatment.or.Control)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_text(aes(label = round(mean_speed, 1)), position = position_dodge(width = 0.9), vjust = -0.2, size=3) +
+  labs(x = "Road ID", y = "Mean Speed",
+       fill = "Group") +
+  theme_minimal() +
+  theme(legend.position = "top")
+
+grouped_d <- d %>%
+  group_by(AB.or.BA, Treatment.or.Control) %>%
+  summarise(mean_speed = mean(Speed, na.rm = TRUE))
+
+plot2 <- ggplot(grouped_d, aes(x = factor(AB.or.BA), y = mean_speed, fill = Treatment.or.Control)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_text(aes(label = round(mean_speed, 2)), position = position_dodge(width = 0.9), vjust = -0.3, size=3) +
+  labs(x = "AB/BA", y = "Mean Speed",
+       fill = "Group") +
+  theme_minimal() +
+  theme(legend.position = "top")
+
+grid.arrange(plot1, plot2, nrow = 1)
+
+```
+
+
+Figure 2 shows that for 3 out of 4 roads, there was a decrease in speed during treatment. Figure 2 also shows that both during AB and BA phases we saw decreasing speeds during treatment (however, phase AB saw a greater difference in means than BA). 
+
+```{r echo=FALSE, fig.cap="Box Plots of Speed by Road ID", fig_caption=TRUE, fig.width=6, fig.height=4, message=FALSE}
+ggplot(d, aes(x = factor(Road.ID), y = Speed, fill = Treatment.or.Control)) +
+  geom_boxplot() +
+  facet_grid(. ~ Treatment.or.Control) +
+  labs(x = "Road ID", y = "Speed",
+       fill = "Group") +
+  theme_minimal()
+```
+
+
+Figure 3 shows that the distribution of speeds is relatively equal during both control and treatment groups across all roads. This indicates that while they had similar distributions, there was indeed an overall decrease in speed during treatment.
+
+# Results
+## Base "Naive Model" (1)
+
+```{r echo=FALSE}
+base_model = lm(Speed ~ Treatment.or.Control , data = d)
+#summary(base_model)
+robust_se_base = sqrt(diag(vcovHC(base_model, type = "HC1")))
+#coeftest(base_model, vcov = vcovHC(base_model, type = "HC1"))
+confint_robust_base = confint(base_model, level = 0.95, vcov = vcovHC(base_model, type = "HC1"))
+#confint_robust_base
+
+#stargazer(base_model, type = "latex", se = list(robust_se_base))
+```
+
+The first model we build is a simple “naive” model where we only include the treatment group as a covariate. We find that there is a significant coefficient for the treatment of `r coef(base_model)[2]`, and this is at a 99% level of significance. The confidence interval for this coefficient using robust standard errors is `r confint_robust_base[2]` to `r confint_robust_base[4]`. This model is aptly named “naive” because it does not consider factored Road IDs (which encapsulate speed limits, road markings, and street lights), or other variables that may affect the effectiveness of our treatment.
+
+## Road ID Model (2)
+
+```{r echo=FALSE}
+road_id_model = lm(Speed ~ Treatment.or.Control + factor(Road.ID), data = d)
+#summary(road_id_model)
+robust_se_ri = sqrt(diag(vcovHC(road_id_model, type = "HC1")))
+#coeftest(road_id_model, vcov = vcovHC(road_id_model, type = "HC1"))
+confint_robust_road = confint(road_id_model, level = 0.95, vcov = vcovHC(road_id_model, type = "HC1"))
+#confint_robust_road
+
+#stargazer(road_id_model, type = "latex", se = list(robust_se_ri))
+```
+
+The next model we test includes the Road ID as a factor. We run a t-test for the coefficients and find that there are significant coefficients for each road because the speed limits as well as the street characteristics play an important role in explaining variation. The confidence interval for the treatment coefficient shrinks to between `r confint_robust_road[2]` and `r confint_robust_road[4]`. From this we see there is a smaller treatment effect and some of the differences between the treatment and control are explained by the different Road IDs. The main differences between this model and the base model is that the coefficient for the treatment decreases to `r coef(road_id_model)[2]` mph, this difference suggests that the differences in speed from the base model is partially explained by the different roads that were tested on.
+
+## Full Model (3)
+
+```{r echo=FALSE, warning=FALSE}
+d$Vehicle.Category <- factor(d$Vehicle.Category)
+full_model = lm(Speed ~ Treatment.or.Control + factor(Road.ID) + relevel(Vehicle.Category, ref = "Sedan"), data = d)
+#summary(full_model)
+robust_se_fm = sqrt(diag(vcovHC(full_model, type = "HC1")))
+#coeftest(full_model, vcov = vcovHC(full_model, type = "HC1"))
+confint_robust_full = confint(full_model, level = 0.95, vcov = vcovHC(full_model, type = "HC1"))
+#confint_robust_full
+
+#stargazer(full_model, type = "latex", se = list(robust_se_fm))
+```
+
+Our final full model includes the vehicle category as well as the coefficients listed above. There appear to be minor differences between the average speed depending on the type of vehicle with the exception of motorcycles which could potentially being an outlier. We run a t-test for the coefficients where we find that the coefficient for compact, van, and motorcycles are significant but the rest of the vehicle types are not. The confidence interval using robust standard errors is similar to the previous model from `r confint_robust_full[2]` to `r confint_robust_full[4]`, meaning that a little bit more of the variation is explained by the vehicle type. We see that the impact of adding in the car type as well causes there to be another decrease in the coefficient for the treatment (`r coef(full_model)[2]`). There are differences in the speeds observed by the car type with the biggest difference being motorcycles and them driving significantly faster than other vehicle types. We see a coefficient of about 10.7 meaning they drive about 10 mph faster than the constant which is sedans. 
+
+```{r echo=FALSE, results='asis', warning=FALSE}
+
+stargazer(base_model, road_id_model, full_model, type = "latex", se = list(robust_se_base, robust_se_ri, robust_se_fm), header = FALSE, font.size = "footnotesize", column.sep.width = "-15pt", title="Comparison of Naive, Road ID and Full")
+
+```
+
+## Final Model Selection
+
+```{r echo=FALSE}
+test_fixed_effects = anova(base_model, road_id_model, full_model)
+kable(as.data.frame(test_fixed_effects))
+```
+
+To select the final model we conduct an ANOVA test between the 3 models above. We find that there are significant differences between each model and that the full model is the strongest. 
+
+```{r echo=FALSE, message=FALSE, fig.width=6, fig.height=4, warning=FALSE, fig.cap="Comparing Base vs. Full Model Confidence Intervals", fig_caption=TRUE}
+mean_base_treatment <- coef(base_model)["Treatment.or.ControlT"]
+mean_full_treatment <- coef(full_model)["Treatment.or.ControlT"]
+
+base_df <- data.frame(
+  Model = "Base Model",
+  Mean = mean_base_treatment,
+  Lower = min(confint_robust_base["Treatment.or.ControlT", ]),
+  Upper = max(confint_robust_base["Treatment.or.ControlT", ])
+)
+
+full_df <- data.frame(
+  Model = "Full Model",
+  Mean = mean_full_treatment,
+  Lower = min(confint_robust_full["Treatment.or.ControlT", ]),
+  Upper = max(confint_robust_full["Treatment.or.ControlT", ])
+)
+
+# Combine data frames
+combined_df <- rbind(base_df, full_df)
+
+# Plot as a box and whisker plot with lines connecting
+plotci<- ggplot(combined_df, aes(x = Model, y = Mean, ymin = Lower, ymax = Upper, color = Model, fill = Model)) +
+  geom_crossbar(width = 0.5, alpha = 0.7) +
+  geom_line(aes(group = Model), color = "black", size = 1) +  # Add lines connecting the boxes
+  geom_point(size = 3, color = "black") +  # Add points at the means
+  labs(
+       x = "Model",
+       y = "Treatment Effect") +
+  scale_color_manual(values = c("#66c2a5", "#fc8d62")) +
+  scale_fill_manual(values = c("#66c2a5", "#fc8d62")) +
+  theme_minimal() +
+  theme(legend.position = "none",
+        plot.title = element_text(size = 13, face = "bold"),
+        axis.title.x = element_text(size = 11, face = "bold"),
+        axis.title.y = element_text(size = 11, face = "bold"),
+        axis.text = element_text(size = 10),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        axis.line = element_line(color = "black"))
+
+plotci
+```
+
+Figure 4 (above) clearly demonstrates the amount of variance explained in the full model when compared to the base model as the confidence interval of estimated treatment effect is significantly narrower.
+
+## Covariates Not Included
+We tested other covariates that we had collected as well (street lights, additional markings, speed limit, time). We decided to not include these covariates into the final model because they were highly correlated (collinear) with the Road ID. We expect that if we were to have a much larger sample of roads, that we would be able to include these covariates in the model (and potentially remove road id instead). With a larger sample of roads, we would be able to test for heterogeneous treatment effects especially with additional road markings and street lights (since these may influence the visibility of our treatment). 
+
+## Analyzing a Return to Baseline 
+As mentioned in the experimental design, for each road we collected data twice–once where we did control for the first half of the collection period (and treatment after) and vice versa. The purpose of this AB-BA design was to see if there was a return to baseline in the control measurements. This allowed us to control for the time of day as well (if people drive slower later at night, then we would expect to see inverse results between AB and BA). 
+
+```{r echo=FALSE, results='asis'}
+mod_AB <- lm(Speed ~ Treatment.or.Control + as.factor(Road.ID) + relevel(Vehicle.Category, ref = "Sedan"), d[d$AB.or.BA == "AB",])
+robust_se_AB = sqrt(diag(vcovHC(mod_AB, type = "HC1")))
+mod_BA <- lm(Speed ~ Treatment.or.Control + as.factor(Road.ID) + relevel(Vehicle.Category, ref = "Sedan"), d[d$AB.or.BA == "BA",])
+robust_se_BA = sqrt(diag(vcovHC(mod_BA, type = "HC1")))
+sum_AB <- summary(mod_AB)
+sum_BA <- summary(mod_BA)
+confint_robust_ab = confint(mod_AB, level = 0.95, vcov = vcovHC(mod_AB, type = "HC1"))
+confint_robust_ba = confint(mod_BA, level = 0.95, vcov = vcovHC(mod_BA, type = "HC1"))
+
+stargazer(mod_AB, mod_BA, type = "latex", se = list(robust_se_AB, robust_se_BA), header=FALSE, title="AB (1) and BA (2) models")
+```
+
+From the regression analysis (Table 6), we can see that the treatment effect in the AB group is `r coef(mod_AB)[2]` and `r coef(mod_BA)[2]` in the BA group. All coefficients in both the AB and BA models are significant at 99%, however, we want to know if the two treatment effect estimates are significantly different from each other. This is important to know because if there is a statistically significant difference between the two coefficients, then it might indicate that there is a flaw in the experiment, or that the treatment has a different effect based on the time of day or some other factor. To test the null hypothesis that there is no significant difference between the two coefficients in the AB and BA model, we run a z-test.
+
+```{r echo=FALSE}
+z_score <- (coef(mod_AB)[2] - coef(mod_BA)[2]) / sqrt(sum_AB$coefficients[6]^2 + sum_BA$coefficients[6]^2)
+z_pval <- 2*(1-pnorm(abs(z_score)))
+```
+
+After running the test, we receive a p-value of `r z_pval` meaning, we fail to reject the null hypothesis and conclude that there is no significant difference between the coefficients in the AB and BA models. We can confidently conclude that there was a return to baseline with our AB-BA design, and the treatment is significant. 
+
+```{r, echo=FALSE, fig.cap="Comparison of Confidence Intervals for AB & BA", warning=FALSE, fig_caption=TRUE, message=FALSE, fig.width=3, fig.height=2}
+
+mean_ab_treatment <- coef(mod_AB)["Treatment.or.ControlT"]
+mean_ba_treatment <- coef(mod_BA)["Treatment.or.ControlT"]
+
+AB_df <- data.frame(
+  Model = "AB",
+  Mean = mean_ab_treatment,
+  Lower = min(confint_robust_ab["Treatment.or.ControlT", ]),
+  Upper = max(confint_robust_ab["Treatment.or.ControlT", ])
+)
+
+BA_df <- data.frame(
+  Model = "BA",
+  Mean = mean_ba_treatment,
+  Lower = min(confint_robust_ba["Treatment.or.ControlT", ]),
+  Upper = max(confint_robust_ba["Treatment.or.ControlT", ])
+)
+
+# Combine data frames
+combined_df2 <- rbind(AB_df, BA_df)
+
+# Plot as a box and whisker plot with lines connecting
+plotabba <- ggplot(combined_df2, aes(x = Model, y = Mean, ymin = Lower, ymax = Upper, color = Model, fill = Model)) +
+  geom_crossbar(width = 0.5, alpha = 0.7) +
+  #geom_line(aes(group = Model), color = "black", size = 1, show.legend = FALSE) +  # Add lines connecting the boxes
+  geom_point(size = 3, color = "black") +  # Add points at the means
+  labs(
+       x = "Test",
+       y = "Treatment Effect") +
+  scale_color_manual(values = c("#66c2a5", "#fc8d62")) +
+  scale_fill_manual(values = c("#66c2a5", "#fc8d62")) +
+  theme_minimal() +
+  theme(legend.position = "none",
+        plot.title = element_text(size = 13, face = "bold"),
+        axis.title.x = element_text(size = 11, face = "bold"),
+        axis.title.y = element_text(size = 11, face = "bold"),
+        axis.text = element_text(size = 10),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.border = element_blank(),
+        axis.line = element_line(color = "black"))
+
+plotabba
+```
+
+We can further observe the box plots of the confidence intervals for the AB and BA models (Figure 5) and see that they overlap by more than 50%. This is another way of showing that there is no significant difference between the two treatment effects.
+
+## Heterogeneous Treatment Effects
+Because we treated different types of roads and vehicles at different times, we look for heterogeneous treatment effects. 
+
+### Road ID HTE
+When looking at the heterogeneous treatment effects for the different Road ID’s (Table 7) we see that there are different treatment effects for the different roads with road 1 having an HTE of -1.1 mph, road 2: -2.5 mph, road 4: .04 mph, and road 5: -1.4 mph. However, none of these heterogeneous treatment effect coefficients are significant at the 5% level, so we can conclude that there are no significant heterogeneous treatment effects for Road ID and in general the ATE applies to each road we observed.
+
+```{r, echo = FALSE, results='asis'}
+mod_roadid_hte = lm(Speed ~ Treatment.or.Control + factor(Road.ID) + Vehicle.Category + Treatment.or.Control * factor(Road.ID), data = d)
+robust_roadid_hte = sqrt(diag(vcovHC(mod_roadid_hte, type = "HC1")))
+
+stargazer(mod_roadid_hte, type = "latex", se = list(robust_roadid_hte), header=FALSE, title="Road ID HTE")
+```
+
+### Vehicle Type HTE
+Completing a similar process, we look at the heterogeneous treatment effects for different Vehicle Types (Table 8). The treatment coefficient represents the HTE for sedans, and each vehicle type HTE can be determined by adding their specific HTE coefficient to the sedans'. We see that Motorcycle is the only vehicle category that has a HTE significant at the 5% level, however, we will not conclude that there is a heterogeneous treatment effect for motorcycles because our dataset only contained 2 motorcycle observations and we cannot generalize with only 2 data points. Therefore, we conclude again, there is not HTE for vehicle type.
+
+```{r, echo = FALSE, results='asis'}
+mod_veh_hte = lm(Speed ~ Treatment.or.Control + factor(Road.ID)+ relevel(Vehicle.Category, ref = "Sedan") + Treatment.or.Control * relevel(Vehicle.Category, ref = "Sedan"), data = d)
+robust_veh_hte = sqrt(diag(vcovHC(mod_veh_hte, type = "HC1")))
+stargazer(mod_veh_hte, type = "latex", se = list(robust_veh_hte), header=FALSE, title="Vehicle Type HTE", font.size = "footnotesize")
+```
+
+### Time HTE
+Lastly, we explore heterogeneous treatment effects for different time intervals (Table 9). We classify any time between 7pm and 8pm as 7, 8pm and 9pm as 8, and 9pm and 10pm as 9. We see that 7 and 8 have significant coefficients, potentially indicating a heterogeneous treatment effect. However, we again are skeptical of the results because if we look at Table 10, we can see that road ID 2 makes up the majority of observations during the time period from 7pm to 8pm. Road ID 2 was also the road that had the greatest HTE estimate when we looked at HTE between road IDs. This indicates that ID 2 could be biasing results when searching for a heterogeneous treatment effect, so before claiming any HTE we would need to collect more data. Furthermore, if we observe the HTE estimates, between 7 and 8pm, the estimate is -2.5 mph, between 8 and 9pm it is -.4 mph, and from 9 to 10pm the estimate is -1.6 mph. If there were to be a HTE for time of night, we would expect the treatment effects for 8 and 9 to be more similar than not. With more observations spread uniformly across different time measurements, we would be able to more confidently state whether there was indeed a heterogeneous treatment effect for time of night.
+
+```{r echo=FALSE, results='asis'}
+d$time_c <- as.numeric(substring(d$Time, 1, 1))
+
+mod_time = lm(Speed ~ Treatment.or.Control + factor(Road.ID) + Vehicle.Category + factor(time_c) + factor(time_c)*Treatment.or.Control, data = d)
+robust_time = sqrt(diag(vcovHC(mod_time, type = "HC1")))
+stargazer(mod_time, type = "latex", se = list(robust_time), header=FALSE, title="Time HTE", font.size = "footnotesize")
+```
+
+```{r echo=FALSE, fig.cap="Distribution of Observations by Time Intervals and Road ID", warning=FALSE, fig_caption=TRUE, message=FALSE, fig.width=3, fig.height=2}
+
+kable(table(d$Road.ID, d$time_c), caption="Distribution of Observations by Time Intervals and Road ID")
+```
+
+# Discussion
+We observed a consistent reduction in average speed across all roads following the implementation of road markings, with an average treatment effect of -1.48 mph. Notably, the coefficients associated with the factors of Road IDs revealed meaningful differences in average speeds among specific roads. For instance, Road 5 exhibited a speed limit 5 mph higher than Road 1, and the coefficient of 9.18 suggested an average speed nearly 10 mph faster. Also, the Vehicle Category coefficients indicate the impact of vehicle types on average speeds. For example, SUVs were found to travel at an average speed approximately 0.59 mph slower than sedans. These covariates helped capture variance in treatment effect estimations and allowed us to produce model that confidently explains the effect on speed of adding small red roadside markings to roads at night. 
+
+Our A-B-A design allowed us to verify the validity of findings by controlling for factors such as day of the week, time of day, and darkness. In comparing our AB and BA models, we found that there was no significant difference between treatment coefficients and can conclude that we saw return to baseline behavior, indicating that our treatment works. 
+
+In searching for heterogeneity in treatment effect, we tested road ID, vehicle category, and time of night. While we potentially saw some results in vehicle category and time of night that are indicative of heterogeneous treatment effects, we hesitate to draw any definitive conclusions as vehicle category was uniformly distributed and we did not have a uniform distribution of road id measurements with time of the night. Because of this, we will label any heterogeneous treatment effects as inconclusive, and open to further investigation.  
+
+Our results do not come without a few caveats that need to be addressed: 
+
+* On Road 2, the speed limit is 30 mph but the observed speeds are much slower than this hovering around 20 mph. The main reason for this is because the road is well traveled, and busier roads tend to move more slowly. Additionally, ahead of where we set up the reflectors there is a stop light and we observed that people are slowing down well in advance of the stop light. This inconsistency calls for further investigation into potential factors influencing driver behavior, such as road conditions, traffic volume, or sign clarity.
+* There is an imbalance in the vehicle types (figure) that were measured because ideally, we would measure an equal amount of each category. In particular, we only have two motorcycle observations, and motorcycles turned out to be a significant covariate in our final model. While experience leads us to believe this is a reasonable result (where motorcycles travel significantly faster than cars), we would absolutely need more data to determine if vehicle category is significant in explaining variation. We also expected to measure more trucks and SUVs than sedans, as those vehicles represent a larger share of ownership in the US. Our original intention was to see if different sized cars had different reactions to reflectors as visibility in different categories of vehicles differs significantly. Longer periods of measurement might increase the level of diversity in our vehicle type measurements.
+* We were limited in the number of streets that we were able to measure. Future research, without the same time constraints, should look at many different roads in order to build a better understanding of the impact that road type has on speed.
+
+```{r echo=FALSE, fig.cap="Frequency of Observed Vehicle Categories", fig_caption=TRUE, fig.width=3, fig.height=2}
+value_counts <- table(d$Vehicle.Category)
+
+# Convert the frequency table to a dataframe
+df_counts <- as.data.frame(value_counts)
+
+# Plot bar plot
+ggplot(d, aes(x = Vehicle.Category)) +
+  geom_bar() +
+  labs(x = "Type", y = "Frequency") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+While our experiment shows a change in driving behavior (speed) due to roadside reflectors at night, we hesitate to make any claims related to safety. There is no evidence that a 1.5 mph decrease in speed is “safer,” however, we can say that the roadside reflectors did affect the attention of drivers. Again--whether it was because they were distracting, aiding speed perception, or illuminating the road–we cannot say, and further research would need to be conducted. For example, there are other factors that might be attributed to road safety that we would like to measure - lateral location in traffic lanes, spacing between cars, etc. The format of our measurement strategy made it difficult to assess these factors, as the amount of time for each measurement was very short (<5s). Experiments to accurately measure those types of characteristics might require placement of fixed sensors and extended measurement periods.
+
+# Conclusion
+
+Our study suggests that road markings effectively reduce speeds across various roads and vehicle types, offering promising prospects for enhancing road safety through simple interventions. However, further research is required to determine safety implications. Regardless, our treatment did have an effect on driving behavior, but had a proportionally higher effect at slower speeds (1.5 mph decrease from 25 mph is a 6% decrease whereas 1.5 mph from 50 mph is a 3% decrease). Additionally, vehicle category and time of night may impact treatment, however, there was an imbalance in vehicle categories and times and no definitive statement can be made about what type of vehicle or time had the greatest response to the treatment or and if there were any heterogeneities. We believe this experiment provides a solid foundation for future experiments to build upon that might narrow-in on specific vehicle types, like motorcycles or vans, for more targeted safety efforts.
+
+\newpage
+# Appendix 
+
+### A.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=0.4\textwidth]{treatment.png}
+  \caption{Photo of Treatment}
+  \label{fig:treatment}
+\end{figure}
+
+### B. 
+
+Radar Gun: https://www.amazon.com/dp/B0002X7V1Q?psc=1&ref=ppx_yo2ov_dt_b_product_details
+
+\newpage
+# References
+
+- Dario Babić, Mario Fiolić, Darko Babić, Timothy Gates, "Road Markings and Their Impact on 
+    Driver Behaviour and Road Safety: A Systematic Review of Current Findings", Journal 
+    of Advanced Transportation, vol. 2020, Article ID 7843743, 19 pages, 2020. 
+    https://doi.org/10.1155/2020/7843743
+
+- Laura Garach, Francisco Calvo, Juan De Oña, “The effect of widening longitudinal road 
+    markings on driving speed perception,” Transportation Research Part F: Traffic 
+    Psychology and Behaviour, Volume 88, 2022, Pages 141-154,                             
+    https://www.sciencedirect.com/science/article/pii/S1369847822001164 
+
+- Konstandinos Diamandouros, Michael Gatscha, “Rainvision: The Impact of Road Markings on 
+    Driver Behaviour – Wet Night Visibility,” Transportation Research Procedia Volume 14, 2016, Pages      4344-4353, https://doi.org/10.1016/j.trpro.2016.05.356.
+
+- Mario Fiolić, Darko Babić, Dario Babić, Sanja Tomasović, “Effect of road markings and road 
+    signs quality on driving behaviour, driver’s gaze patterns and driver’s cognitive load at 
+    night-time”, Transportation Research Part F: Traffic Psychology and Behaviour, Volume 
+    99, 2023, Pages 306-318, 
+    https://www.sciencedirect.com/science/article/pii/S1369847823002322
+
+- The Zebra. “Study Finds 52% of Americans Fear Driving Alone at Night.” The Zebra, 2023, 
+    www.thezebra.com/resources/driving/nighttime-driving-study. Accessed 4 Feb. 2024. 
